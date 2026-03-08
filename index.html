@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Simulator — Interview / Presentation Quality</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-soft: #10172d;
+      --panel: rgba(16, 23, 45, 0.78);
+      --panel-2: rgba(20, 28, 52, 0.9);
+      --text: #e8eefc;
+      --muted: #9fb0d1;
+      --line: rgba(255, 255, 255, 0.1);
+      --line-strong: rgba(255, 255, 255, 0.18);
+      --accent: #73a5ff;
+      --accent-2: #8d7dff;
+      --success: #4fd1a5;
+      --warning: #ffd166;
+      --danger: #ff7f96;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+      --radius: 20px;
+      --radius-sm: 14px;
+      --card-pad: 18px;
+      --chip: rgba(255,255,255,.06);
+      --glow: 0 0 0 1px rgba(115,165,255,.25), 0 10px 35px rgba(115,165,255,.18);
+      --gradient: linear-gradient(135deg, rgba(115,165,255,.18), rgba(141,125,255,.16));
+      --hero-grad: radial-gradient(circle at 10% 10%, rgba(115,165,255,.18), transparent 28%),
+                   radial-gradient(circle at 90% 10%, rgba(141,125,255,.14), transparent 25%),
+                   radial-gradient(circle at 60% 80%, rgba(79,209,165,.09), transparent 25%),
+                   linear-gradient(180deg, #09111f 0%, #0d1426 100%);
+      --focus: 0 0 0 3px rgba(115,165,255,.35);
+    }
+
+    body.light {
+      --bg: #f4f7fd;
+      --bg-soft: #edf2fb;
+      --panel: rgba(255,255,255,.85);
+      --panel-2: rgba(255,255,255,.95);
+      --text: #15233f;
+      --muted: #61708e;
+      --line: rgba(21,35,63,.08);
+      --line-strong: rgba(21,35,63,.15);
+      --accent: #336dff;
+      --accent-2: #6955ff;
+      --success: #0e9f6e;
+      --warning: #c98308;
+      --danger: #d94d6a;
+      --shadow: 0 12px 28px rgba(27, 48, 94, 0.08);
+      --chip: rgba(21,35,63,.05);
+      --glow: 0 0 0 1px rgba(51,109,255,.18), 0 10px 30px rgba(51,109,255,.10);
+      --gradient: linear-gradient(135deg, rgba(51,109,255,.08), rgba(105,85,255,.08));
+      --hero-grad: radial-gradient(circle at 10% 10%, rgba(51,109,255,.10), transparent 28%),
+                   radial-gradient(circle at 90% 10%, rgba(105,85,255,.08), transparent 25%),
+                   radial-gradient(circle at 60% 80%, rgba(14,159,110,.06), transparent 25%),
+                   linear-gradient(180deg, #f6f9ff 0%, #eff4fc 100%);
+      --focus: 0 0 0 3px rgba(51,109,255,.22);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--hero-grad);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.45;
+      transition: background .25s ease, color .25s ease;
+    }
+
+    .container {
+      width: min(1280px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 28px 0 18px;
+      position: relative;
+    }
+
+    .glass {
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      border-radius: 28px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .eyebrow .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 0 6px rgba(115,165,255,.10);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 5vw, 46px);
+      line-height: 1.06;
+      letter-spacing: -0.03em;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 72ch;
+      margin-bottom: 18px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--chip);
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .chip .tiny {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--success);
+      opacity: .95;
+    }
+
+    .summary-card {
+      border-radius: 22px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      height: 100%;
+    }
+
+    .summary-card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      letter-spacing: -.02em;
+    }
+
+    .summary-card p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .summary-card ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .summary-card li { margin: 8px 0; }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 50;
+      margin: 10px 0 18px;
+    }
+
+    .topbar-inner {
+      border-radius: 18px;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .pipeline-wrap {
+      display: flex;
+      gap: 10px;
+      overflow: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .pipeline-wrap::-webkit-scrollbar { display: none; }
+
+    .stage-pill {
+      min-width: 128px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      transition: all .25s ease;
+      cursor: pointer;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .stage-pill:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+    }
+
+    .stage-pill.active {
+      background: var(--gradient);
+      border-color: rgba(115,165,255,.4);
+      box-shadow: var(--glow);
+    }
+
+    .stage-pill.done::after {
+      content: "✓";
+      position: absolute;
+      top: 10px; right: 10px;
+      font-size: 12px;
+      color: var(--success);
+    }
+
+    .stage-index {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .stage-name {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button, .btn, select, input, textarea {
+      font: inherit;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      cursor: pointer;
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      transition: transform .16s ease, border-color .2s ease, background .2s ease, opacity .2s ease;
+      box-shadow: none;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      background: rgba(255,255,255,.08);
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    button:focus-visible, input:focus-visible, textarea:focus-visible, .doc-toggle:focus-visible, .example-btn:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      border: none;
+      box-shadow: 0 12px 25px rgba(51,109,255,.22);
+    }
+
+    .btn-ghost {
+      background: transparent;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
+      gap: 18px;
+      padding-bottom: 34px;
+    }
+
+    .card {
+      border-radius: var(--radius);
+      padding: var(--card-pad);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .card h2, .card h3, .card h4 {
+      margin-top: 0;
+      letter-spacing: -.02em;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .section-head .title-group h2 {
+      margin-bottom: 6px;
+      font-size: 22px;
+    }
+
+    .help {
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 70ch;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+    }
+
+    .badge.accent {
+      color: var(--text);
+      background: rgba(115,165,255,.11);
+      border-color: rgba(115,165,255,.24);
+    }
+
+    .badge.success {
+      color: var(--text);
+      background: rgba(79,209,165,.10);
+      border-color: rgba(79,209,165,.24);
+    }
+
+    .badge.warning {
+      color: var(--text);
+      background: rgba(255,209,102,.10);
+      border-color: rgba(255,209,102,.22);
+    }
+
+    .panel-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .query-box {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+    }
+
+    .input-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .query-input {
+      width: 100%;
+      border-radius: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: rgba(255,255,255,.04);
+      min-height: 52px;
+    }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .example-btn {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all .2s ease;
+    }
+
+    .example-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .mini-card {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+
+    .mini-card h4 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .mini-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .stage-card {
+      display: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+
+    .stage-card.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+      animation: stageReveal .35s ease;
+    }
+
+    @keyframes stageReveal {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .doc-list, .chunk-list, .rank-list, .context-list, .ground-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .doc-card, .chunk-card, .rank-card, .context-card, .ground-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .doc-card.retrieved, .chunk-card.retrieved, .rank-card.retrieved, .context-card.retrieved, .ground-card.retrieved {
+      border-color: rgba(79,209,165,.32);
+      box-shadow: 0 0 0 1px rgba(79,209,165,.18) inset;
+      background: linear-gradient(180deg, rgba(79,209,165,.08), rgba(255,255,255,.02));
+    }
+
+    .doc-card.top, .chunk-card.top, .rank-card.top {
+      box-shadow: var(--glow);
+      border-color: rgba(115,165,255,.42);
+      background: linear-gradient(180deg, rgba(115,165,255,.12), rgba(255,255,255,.02));
+    }
+
+    .doc-meta, .chunk-meta, .rank-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .doc-title, .chunk-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .doc-body, .chunk-body, .context-body, .answer-body, .prompt-box, .ground-note {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .doc-toggle {
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .doc-full {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .28s ease, opacity .28s ease;
+      opacity: 0;
+      margin-top: 0;
+    }
+
+    .doc-full.open {
+      max-height: 220px;
+      opacity: 1;
+      margin-top: 10px;
+    }
+
+    .embed-wrap {
+      display: grid;
+      gap: 14px;
+    }
+
+    .embed-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding: 14px;
+    }
+
+    .embed-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .vector-bars {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .bar-col {
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+    }
+
+    .bar {
+      width: 100%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(115,165,255,.95), rgba(141,125,255,.88));
+      min-height: 8px;
+      align-self: end;
+      transition: height .35s ease;
+    }
+
+    .bar-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .token-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 0;
+    }
+
+    .token {
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+    }
+
+    .token.hit {
+      background: rgba(79,209,165,.12);
+      border-color: rgba(79,209,165,.28);
+    }
+
+    .score-bar-wrap {
+      margin-top: 10px;
+    }
+
+    .score-bar-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .score-bar {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .4s ease;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .prompt-card, .answer-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      padding: 14px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .prompt-box {
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 10px;
+      max-height: 360px;
+      overflow: auto;
+    }
+
+    .copy-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .answer-body {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .aside-stack {
+      display: grid;
+      gap: 18px;
+      align-self: start;
+      position: sticky;
+      top: 90px;
+    }
+
+    .progress-card .meter {
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--line);
+      margin: 14px 0 10px;
+    }
+
+    .progress-card .meter-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .35s ease;
+    }
+
+    .progress-stat {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend-list, .glossary-list, .insight-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .legend-item, .glossary-item, .insight-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .legend-item:last-child, .glossary-item:last-child, .insight-item:last-child {
+      border-bottom: none;
+    }
+
+    .swatch {
+      width: 12px; height: 12px; border-radius: 50%;
+      margin-top: 5px;
+    }
+
+    .swatch.accent { background: var(--accent); }
+    .swatch.success { background: var(--success); }
+    .swatch.warning { background: var(--warning); }
+
+    .small {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .callout {
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+    }
+
+    .callout strong { color: var(--text); }
+
+    .footer-summary {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--line-strong);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+      z-index: 99;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .hr {
+      height: 1px;
+      background: var(--line);
+      margin: 16px 0;
+    }
+
+    .connector {
+      height: 44px;
+      position: relative;
+      margin: 4px 0 8px;
+    }
+
+    .connector::before {
+      content: "";
+      position: absolute;
+      left: 22px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(115,165,255,.2), rgba(141,125,255,.5), rgba(79,209,165,.2));
+      border-radius: 999px;
+      opacity: .85;
+    }
+
+    .connector::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 0 8px rgba(115,165,255,.08);
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: .95; }
+      50% { transform: scale(1.12); opacity: .8; }
+    }
+
+    .empty {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px dashed var(--line-strong);
+      color: var(--muted);
+      background: rgba(255,255,255,.02);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .kpi {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+
+    .kpi .num {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      margin-bottom: 4px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+
+    [data-tip] {
+      position: relative;
+    }
+    [data-tip]:hover::after, [data-tip]:focus-visible::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 0;
+      max-width: 260px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--line-strong);
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      color: var(--text);
+      z-index: 20;
+      white-space: normal;
+    }
+
+    @media (max-width: 1040px) {
+      .hero-grid, .main-grid, .two-col, .info-grid { grid-template-columns: 1fr; }
+      .aside-stack { position: static; }
+      .topbar-inner { grid-template-columns: 1fr; }
+      .controls { justify-content: flex-start; }
+    }
+
+    @media (max-width: 720px) {
+      .container { width: min(100% - 20px, 1280px); }
+      .hero-card, .card { padding: 16px; }
+      .input-wrap { grid-template-columns: 1fr; }
+      .vector-bars { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .kpi-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="dark">
+  <div class="container">
+    <header class="hero">
+      <div class="hero-card glass">
+        <div class="hero-grid">
+          <div>
+            <div class="eyebrow">
+              <span class="dot" aria-hidden="true"></span>
+              Retrieval-Augmented Generation Simulator
+            </div>
+            <h1>Understand RAG step by step — like you’re presenting it in an interview.</h1>
+            <p class="sub">
+              This simulator walks through the full RAG pipeline using a realistic e-commerce policy assistant example. It shows how documents are chunked, scored, retrieved, assembled into context, and used to ground an answer.
+            </p>
+
+            <div class="hero-meta">
+              <span class="chip"><span class="tiny" aria-hidden="true"></span> Single-file HTML</span>
+              <span class="chip"><span class="tiny" aria-hidden="true"></span> No external libraries</span>
+              <span class="chip"><span class="tiny" aria-hidden="true"></span> Presentation-ready UI</span>
+              <span class="chip"><span class="tiny" aria-hidden="true"></span> Educational mock logic</span>
+            </div>
+
+            <div class="kpi-grid">
+              <div class="kpi">
+                <div class="num" id="kpiDocs">5</div>
+                <div class="small">source documents</div>
+              </div>
+              <div class="kpi">
+                <div class="num" id="kpiChunks">0</div>
+                <div class="small">chunks generated</div>
+              </div>
+              <div class="kpi">
+                <div class="num">10</div>
+                <div class="small">pipeline stages</div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="summary-card">
+            <h3>What is RAG?</h3>
+            <p>
+              RAG combines a language model with a retrieval step. Instead of answering from general memory alone, the system first finds relevant source material and then uses that material as grounded context.
+            </p>
+            <ul>
+              <li><strong>Why it matters:</strong> better factual grounding, fresher knowledge, lower hallucination risk.</li>
+              <li><strong>Typical pattern:</strong> query → retrieve → augment prompt → generate answer.</li>
+              <li><strong>This demo:</strong> uses deterministic keyword scoring to simulate retrieval behavior.</li>
+            </ul>
+            <div class="hr"></div>
+            <div class="badge-row">
+              <span class="badge accent">Interview-friendly</span>
+              <span class="badge success">Grounded answers</span>
+              <span class="badge warning">Mock embeddings</span>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </header>
+
+    <div class="topbar">
+      <div class="topbar-inner glass">
+        <div class="pipeline-wrap" id="pipelineWrap" aria-label="RAG pipeline stages"></div>
+
+        <div class="controls" aria-label="Simulation controls">
+          <button id="themeBtn" class="btn-ghost" type="button">Toggle Theme</button>
+          <button id="prevBtn" type="button">Previous</button>
+          <button id="nextBtn" type="button">Next</button>
+          <button id="autoBtn" type="button">Auto Play</button>
+          <button id="resetBtn" type="button">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="main-grid">
+      <section class="panel-grid">
+        <div class="card">
+          <div class="section-head">
+            <div class="title-group">
+              <h2>Run the simulation</h2>
+              <div class="help">
+                Choose an example question or write your own. This simulator uses an e-commerce returns and shipping policy knowledge base so the behavior is easy to explain in demos and interviews.
+              </div>
+            </div>
+            <div class="badge-row">
+              <span class="badge accent">Domain: E-commerce policy assistant</span>
+              <span class="badge">Top-K retrieval: 3</span>
+            </div>
+          </div>
+
+          <div class="query-box">
+            <label for="queryInput"><strong>User query</strong></label>
+            <div class="examples" id="exampleButtons"></div>
+            <div class="input-wrap">
+              <input
+                id="queryInput"
+                class="query-input"
+                type="text"
+                placeholder="Example: Can I return a sale item after 20 days if it is unused?"
+                aria-label="User query"
+              />
+              <button id="runBtn" class="btn-primary" type="button">Run Simulation</button>
+            </div>
+          </div>
+
+          <div class="info-grid" style="margin-top:14px;">
+            <div class="mini-card">
+              <h4>What this simulates</h4>
+              <p>
+                The retrieval side of RAG: indexing source knowledge, chunking content, creating conceptual embeddings, scoring similarity, retrieving top chunks, and grounding the generated answer.
+              </p>
+            </div>
+            <div class="mini-card">
+              <h4>What this does not simulate</h4>
+              <p>
+                Real vector math, ANN indexes, true transformer embeddings, token limits, prompt compression, reranking models, or production infrastructure.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="stageContainer" class="panel-grid" aria-live="polite"></div>
+
+        <div class="card footer-summary">
+          <div class="section-head">
+            <div class="title-group">
+              <h2>Why this matters beyond the demo</h2>
+              <div class="help">
+                RAG is most useful when an answer should be based on a specific body of knowledge rather than the model’s general prior training.
+              </div>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="callout">
+              <strong>When to use RAG</strong><br />
+              Internal knowledge assistants, policy copilots, support documentation, enterprise search, regulated workflows, product documentation, and any setting where source-backed answers matter.
+            </div>
+            <div class="callout">
+              <strong>Key limitation of this simulator</strong><br />
+              This demo uses simple keyword logic to explain the idea. Real systems use learned embeddings, vector databases, prompt engineering, ranking layers, and operational guardrails.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="aside-stack">
+        <div class="card progress-card">
+          <div class="section-head">
+            <div class="title-group">
+              <h3>Presentation progress</h3>
+              <div class="help">Track where you are in the RAG walkthrough.</div>
+            </div>
+            <span class="badge accent" id="currentStageBadge">Not started</span>
+          </div>
+
+          <div class="meter" aria-hidden="true">
+            <div class="meter-fill" id="meterFill"></div>
+          </div>
+          <div class="progress-stat">
+            <span id="progressText">0 / 10 stages</span>
+            <span id="autoplayText">Manual mode</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <div class="title-group">
+              <h3>Legend</h3>
+              <div class="help">Visual cues used throughout the simulation.</div>
+            </div>
+          </div>
+          <div class="legend-list">
+            <div class="legend-item">
+              <span class="swatch accent"></span>
+              <div><strong>Active / top match</strong><div class="small">The most relevant stage, chunk, or result at a given moment.</div></div>
+            </div>
+            <div class="legend-item">
+              <span class="swatch success"></span>
+              <div><strong>Retrieved</strong><div class="small">A document chunk chosen to support the answer.</div></div>
+            </div>
+            <div class="legend-item">
+              <span class="swatch warning"></span>
+              <div><strong>Conceptual simulation</strong><div class="small">Useful for explanation, but not exact production behavior.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <div class="title-group">
+              <h3>Mini glossary</h3>
+              <div class="help">Helpful terms for interviews and demos.</div>
+            </div>
+          </div>
+          <div class="glossary-list">
+            <div class="glossary-item">
+              <div><strong>Chunk</strong></div>
+              <div class="small">A smaller piece of a document created to make retrieval more precise.</div>
+            </div>
+            <div class="glossary-item">
+              <div><strong>Embedding</strong></div>
+              <div class="small">A numeric representation that helps compare semantic similarity.</div>
+            </div>
+            <div class="glossary-item">
+              <div><strong>Retrieval</strong></div>
+              <div class="small">The step that finds relevant source content for the user’s question.</div>
+            </div>
+            <div class="glossary-item">
+              <div><strong>Grounding</strong></div>
+              <div class="small">Constraining the answer using retrieved evidence instead of pure model recall.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <div class="title-group">
+              <h3>Speaker notes</h3>
+              <div class="help">A crisp way to explain the value of RAG in a presentation.</div>
+            </div>
+          </div>
+          <div class="insight-list">
+            <div class="insight-item">
+              <div>1</div>
+              <div class="small">A plain LLM answers from its training. RAG adds a retrieval step so answers can be based on current or proprietary knowledge.</div>
+            </div>
+            <div class="insight-item">
+              <div>2</div>
+              <div class="small">The quality of chunking and retrieval often matters as much as the generation model.</div>
+            </div>
+            <div class="insight-item">
+              <div>3</div>
+              <div class="small">A grounded answer is not just fluent — it is traceable to specific source evidence.</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // -----------------------------
+    // Presentation-quality RAG Simulator
+    // Single-file, framework-free implementation
+    // -----------------------------
+
+    const stages = [
+      { id: "query", name: "User Query", explainer: "Start with what the user wants to know." },
+      { id: "kb", name: "Knowledge Base", explainer: "Show the source documents the system can search." },
+      { id: "chunking", name: "Document Chunking", explainer: "Break long documents into smaller searchable units." },
+      { id: "embedding", name: "Embedding Simulation", explainer: "Represent the query and chunks in a comparable numeric form." },
+      { id: "search", name: "Vector Similarity Search", explainer: "Score how relevant each chunk is to the query." },
+      { id: "topk", name: "Top-K Retrieval", explainer: "Select the best chunks to support the answer." },
+      { id: "context", name: "Context Assembly", explainer: "Combine the top chunks into a context block." },
+      { id: "prompt", name: "Prompt Augmentation", explainer: "Construct the prompt that the LLM will actually receive." },
+      { id: "answer", name: "Generated Answer", explainer: "Generate an answer using retrieved context." },
+      { id: "grounding", name: "Why this answer is grounded", explainer: "Show exactly which evidence supports the answer." }
+    ];
+
+    const exampleQueries = [
+      "Can I return a sale item after 20 days if it is unused?",
+      "How long does international shipping take and do I have to pay customs?",
+      "What happens if my package arrives damaged and how do I get a replacement?"
+    ];
+
+    const knowledgeBase = [
+      {
+        id: "DOC-01",
+        title: "Return Policy",
+        category: "Returns",
+        source: "Policy Center",
+        content: `Customers can return most unused items within 30 calendar days of delivery for a full refund to the original payment method. Items must be in original condition with tags attached and original packaging included. Sale items can be returned within 14 calendar days of delivery. Final-sale items are not eligible for return. Refunds are usually processed within 5 to 7 business days after the returned item is inspected at our warehouse.`
+      },
+      {
+        id: "DOC-02",
+        title: "Shipping & Delivery",
+        category: "Shipping",
+        source: "Help Center",
+        content: `Standard domestic shipping takes 3 to 5 business days. Express domestic shipping takes 1 to 2 business days if the order is placed before 2 PM local warehouse time. International shipping usually takes 7 to 14 business days depending on destination and customs processing. Customs duties and import taxes are the customer's responsibility unless the checkout page clearly states duties paid.`
+      },
+      {
+        id: "DOC-03",
+        title: "Exchange & Replacement Policy",
+        category: "Exchanges",
+        source: "Policy Center",
+        content: `If an item arrives damaged, defective, or incorrect, customers should contact support within 7 calendar days of delivery. Eligible cases may receive a replacement at no extra shipping cost. Customers may be asked to share photos of the issue and the shipping label. If a replacement is unavailable, a refund or store credit may be offered.`
+      },
+      {
+        id: "DOC-04",
+        title: "Order Cancellation Rules",
+        category: "Orders",
+        source: "Checkout Support",
+        content: `Orders can be cancelled within 30 minutes of placement from the order confirmation page. After that window, cancellation depends on warehouse processing status. Once an order has shipped, it cannot be cancelled, but the customer may still be able to return it according to the return policy.`
+      },
+      {
+        id: "DOC-05",
+        title: "Store Credit & Refund Timing",
+        category: "Payments",
+        source: "Billing Help",
+        content: `Store credit is issued instantly once approved and can be used on future purchases. Refunds to the original payment method typically appear within 5 to 10 business days depending on the payment provider. Bank cards may take longer to post refunds than digital wallets.`
+      }
+    ];
+
+    const appState = {
+      query: "",
+      currentStep: -1,
+      autoPlay: false,
+      autoTimer: null,
+      chunks: [],
+      queryTokens: [],
+      queryVector: [],
+      chunkVectors: [],
+      scoredChunks: [],
+      topChunks: [],
+      assembledContext: "",
+      finalPrompt: "",
+      finalAnswer: "",
+      answerReason: "",
+      initialized: false
+    };
+
+    const els = {
+      pipelineWrap: document.getElementById("pipelineWrap"),
+      exampleButtons: document.getElementById("exampleButtons"),
+      queryInput: document.getElementById("queryInput"),
+      runBtn: document.getElementById("runBtn"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      autoBtn: document.getElementById("autoBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      stageContainer: document.getElementById("stageContainer"),
+      meterFill: document.getElementById("meterFill"),
+      progressText: document.getElementById("progressText"),
+      currentStageBadge: document.getElementById("currentStageBadge"),
+      autoplayText: document.getElementById("autoplayText"),
+      themeBtn: document.getElementById("themeBtn"),
+      toast: document.getElementById("toast"),
+      kpiChunks: document.getElementById("kpiChunks")
+    };
+
+    const stopWords = new Set([
+      "a","an","the","is","are","was","were","be","been","being","to","of","for","in","on","at","and","or","if","it","my","do","does","did","can","i","we","you","your","our","with","within","after","before","how","what","when","this","that","than","as","from","by","may","will","would","should","most","still","have","has","had","item","items"
+    ]);
+
+    const keywordDimensions = [
+      ["return", "refund", "refunds", "returned", "returning"],
+      ["sale", "final-sale", "discount"],
+      ["days", "calendar", "business", "delivery", "time", "timing"],
+      ["shipping", "delivery", "domestic", "international", "customs"],
+      ["damaged", "defective", "incorrect", "replacement", "replace"],
+      ["cancel", "cancellation", "cancelled", "shipped"],
+      ["store", "credit", "wallet", "payment", "bank"],
+      ["support", "contact", "photos", "label", "warehouse"]
+    ];
+
+    function init() {
+      renderPipeline();
+      renderExampleButtons();
+      bindEvents();
+      setDefaultQuery(exampleQueries[0]);
+      updateTopbar();
+      renderAllVisibleStages();
+    }
+
+    function bindEvents() {
+      els.runBtn.addEventListener("click", startSimulation);
+      els.prevBtn.addEventListener("click", previousStep);
+      els.nextBtn.addEventListener("click", nextStep);
+      els.autoBtn.addEventListener("click", toggleAutoPlay);
+      els.resetBtn.addEventListener("click", resetSimulation);
+      els.themeBtn.addEventListener("click", toggleTheme);
+      els.queryInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") startSimulation();
+      });
+    }
+
+    function setDefaultQuery(q) {
+      els.queryInput.value = q;
+      appState.query = q;
+    }
+
+    function renderPipeline() {
+      els.pipelineWrap.innerHTML = stages.map((stage, idx) => `
+        <button
+          class="stage-pill"
+          id="pill-${stage.id}"
+          data-index="${idx}"
+          type="button"
+          aria-label="Go to stage ${idx + 1}: ${escapeHtml(stage.name)}"
+          title="${escapeHtml(stage.explainer)}"
+        >
+          <span class="stage-index">Step ${idx + 1}</span>
+          <span class="stage-name">${escapeHtml(stage.name)}</span>
+        </button>
+      `).join("");
+
+      [...els.pipelineWrap.querySelectorAll(".stage-pill")].forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.index);
+          if (!appState.initialized) startSimulation();
+          if (appState.currentStep < idx) {
+            appState.currentStep = idx;
+          } else {
+            appState.currentStep = idx;
+          }
+          stopAutoPlay();
+          updateTopbar();
+          renderAllVisibleStages();
+          scrollStageIntoView();
+        });
+      });
+    }
+
+    function renderExampleButtons() {
+      els.exampleButtons.innerHTML = exampleQueries.map(q => `
+        <button class="example-btn" type="button">${escapeHtml(q)}</button>
+      `).join("");
+
+      [...els.exampleButtons.querySelectorAll(".example-btn")].forEach((btn, idx) => {
+        btn.addEventListener("click", () => setDefaultQuery(exampleQueries[idx]));
+      });
+    }
+
+    function startSimulation() {
+      const query = els.queryInput.value.trim();
+      if (!query) {
+        showToast("Please enter a user query to begin.");
+        els.queryInput.focus();
+        return;
+      }
+
+      appState.query = query;
+      appState.initialized = true;
+      appState.currentStep = 0;
+
+      prepareData();
+      updateTopbar();
+      renderAllVisibleStages();
+      scrollStageIntoView();
+    }
+
+    function resetSimulation() {
+      stopAutoPlay();
+      appState.currentStep = -1;
+      appState.initialized = false;
+      appState.chunks = [];
+      appState.queryTokens = [];
+      appState.queryVector = [];
+      appState.chunkVectors = [];
+      appState.scoredChunks = [];
+      appState.topChunks = [];
+      appState.assembledContext = "";
+      appState.finalPrompt = "";
+      appState.finalAnswer = "";
+      appState.answerReason = "";
+      updateTopbar();
+      renderAllVisibleStages();
+      showToast("Simulation reset.");
+    }
+
+    function nextStep() {
+      if (!appState.initialized) {
+        startSimulation();
+        return;
+      }
+      if (appState.currentStep < stages.length - 1) {
+        appState.currentStep += 1;
+        updateTopbar();
+        renderAllVisibleStages();
+        scrollStageIntoView();
+      } else {
+        showToast("You’re already at the final stage.");
+        stopAutoPlay();
+      }
+    }
+
+    function previousStep() {
+      if (!appState.initialized) return;
+      if (appState.currentStep > 0) {
+        appState.currentStep -= 1;
+        updateTopbar();
+        renderAllVisibleStages();
+        scrollStageIntoView();
+      }
+    }
+
+    function toggleAutoPlay() {
+      if (!appState.initialized) {
+        startSimulation();
+      }
+      if (appState.autoPlay) stopAutoPlay();
+      else startAutoPlay();
+    }
+
+    function startAutoPlay() {
+      stopAutoPlay();
+      appState.autoPlay = true;
+      els.autoBtn.textContent = "Stop Auto";
+      els.autoplayText.textContent = "Auto mode";
+      appState.autoTimer = setInterval(() => {
+        if (appState.currentStep >= stages.length - 1) {
+          stopAutoPlay();
+          return;
+        }
+        nextStep();
+      }, 1800);
+    }
+
+    function stopAutoPlay() {
+      appState.autoPlay = false;
+      els.autoBtn.textContent = "Auto Play";
+      els.autoplayText.textContent = "Manual mode";
+      if (appState.autoTimer) {
+        clearInterval(appState.autoTimer);
+        appState.autoTimer = null;
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+      document.body.classList.toggle("dark");
+    }
+
+    function prepareData() {
+      const chunks = chunkDocuments(knowledgeBase);
+      appState.chunks = chunks;
+      els.kpiChunks.textContent = String(chunks.length);
+
+      const queryTokens = tokenize(appState.query);
+      appState.queryTokens = queryTokens;
+
+      const queryVector = vectorizeText(appState.query);
+      appState.queryVector = queryVector;
+
+      const chunkVectors = chunks.map(chunk => ({
+        chunkId: chunk.id,
+        vector: vectorizeText(chunk.text)
+      }));
+      appState.chunkVectors = chunkVectors;
+
+      const scoredChunks = chunks.map(chunk => {
+        const scoreDetail = scoreChunkAgainstQuery(appState.query, chunk.text);
+        const vector = chunkVectors.find(v => v.chunkId === chunk.id)?.vector || [];
+        return {
+          ...chunk,
+          vector,
+          score: scoreDetail.score,
+          matchedKeywords: scoreDetail.matchedKeywords,
+          explanation: scoreDetail.explanation
+        };
+      }).sort((a, b) => b.score - a.score);
+
+      appState.scoredChunks = scoredChunks;
+      appState.topChunks = scoredChunks.slice(0, 3);
+
+      appState.assembledContext = appState.topChunks
+        .map((chunk, idx) => `[Source ${idx + 1} | ${chunk.docTitle} | ${chunk.id}]\n${chunk.text}`)
+        .join("\n\n");
+
+      appState.finalPrompt = buildPrompt(appState.query, appState.assembledContext);
+      appState.finalAnswer = generateAnswer(appState.query, appState.topChunks);
+      appState.answerReason = buildGroundingReason(appState.topChunks);
+    }
+
+    function chunkDocuments(docs) {
+      const chunks = [];
+      docs.forEach(doc => {
+        const sentences = doc.content
+          .split(/(?<=[.!?])\s+/)
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        for (let i = 0; i < sentences.length; i += 2) {
+          const text = [sentences[i], sentences[i + 1]].filter(Boolean).join(" ");
+          const id = `${doc.id}-CH${String(Math.floor(i / 2) + 1).padStart(2, "0")}`;
+          chunks.push({
+            id,
+            docId: doc.id,
+            docTitle: doc.title,
+            category: doc.category,
+            source: doc.source,
+            text
+          });
+        }
+      });
+      return chunks;
+    }
+
+    function tokenize(text) {
+      return text
+        .toLowerCase()
+        .replace(/[^a-z0-9-\s]/g, " ")
+        .split(/\s+/)
+        .map(t => t.trim())
+        .filter(t => t && !stopWords.has(t));
+    }
+
+    function vectorizeText(text) {
+      const tokens = tokenize(text);
+      const vector = keywordDimensions.map(group => {
+        const hits = group.reduce((sum, kw) => {
+          return sum + tokens.filter(t => t.includes(kw) || kw.includes(t)).length;
+        }, 0);
+        return Math.min(10, hits * 3 + (hits > 0 ? 1 : 0));
+      });
+      return vector;
+    }
+
+    function scoreChunkAgainstQuery(query, chunkText) {
+      const qTokens = tokenize(query);
+      const cTokens = tokenize(chunkText);
+
+      const matchedKeywords = [];
+      let lexicalScore = 0;
+
+      qTokens.forEach(qt => {
+        if (cTokens.some(ct => ct.includes(qt) || qt.includes(ct))) {
+          matchedKeywords.push(qt);
+          lexicalScore += 18;
+        }
+      });
+
+      const queryVector = vectorizeText(query);
+      const chunkVector = vectorizeText(chunkText);
+      const similarity = cosineLike(queryVector, chunkVector);
+      const score = Math.round(lexicalScore + similarity * 50);
+
+      let explanation = "Low overlap with the question.";
+      if (matchedKeywords.length >= 4) explanation = "Strong keyword overlap and high conceptual similarity.";
+      else if (matchedKeywords.length >= 2) explanation = "Good overlap with important query terms.";
+      else if (similarity > 0.5) explanation = "Moderate conceptual similarity despite fewer exact matches.";
+
+      return {
+        score,
+        matchedKeywords: [...new Set(matchedKeywords)],
+        explanation
+      };
+    }
+
+    function cosineLike(a, b) {
+      const dot = a.reduce((sum, val, idx) => sum + val * b[idx], 0);
+      const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0)) || 1;
+      const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0)) || 1;
+      return dot / (magA * magB);
+    }
+
+    function buildPrompt(query, context) {
+      return [
+        "SYSTEM:",
+        "You are a helpful e-commerce policy assistant. Answer only using the retrieved policy context below. If the context is insufficient, say so clearly.",
+        "",
+        "RETRIEVED CONTEXT:",
+        context,
+        "",
+        "USER QUESTION:",
+        query,
+        "",
+        "INSTRUCTIONS:",
+        "- Give a clear answer in plain language.",
+        "- Mention any important conditions or time windows.",
+        "- Refer to the relevant policy source(s) in a user-friendly way."
+      ].join("\n");
+    }
+
+    function generateAnswer(query, topChunks) {
+      const q = query.toLowerCase();
+      const topText = topChunks.map(c => c.text).join(" ");
+
+      if (q.includes("sale") && q.includes("return")) {
+        return "Based on the retrieved return policy, sale items can be returned within 14 calendar days of delivery, not 30 days. So if the item is unused but you are trying to return it after 20 days, it would normally not qualify for return. The policy also notes that final-sale items are not eligible for return at all.";
+      }
+
+      if ((q.includes("international") && q.includes("shipping")) || q.includes("customs")) {
+        return "The retrieved shipping policy says international shipping usually takes 7 to 14 business days, depending on destination and customs processing. It also states that customs duties and import taxes are the customer’s responsibility unless checkout explicitly says duties are already paid.";
+      }
+
+      if (q.includes("damaged") || q.includes("replacement") || q.includes("defective")) {
+        return "The retrieved replacement policy says that if an item arrives damaged, defective, or incorrect, you should contact support within 7 calendar days of delivery. Eligible cases may receive a replacement at no extra shipping cost, and support may ask for photos of the issue and the shipping label. If a replacement is unavailable, a refund or store credit may be offered.";
+      }
+
+      if (q.includes("cancel")) {
+        return "The cancellation policy says orders can be cancelled within 30 minutes of placement from the order confirmation page. After that, cancellation depends on warehouse processing status. Once an order has shipped, it cannot be cancelled, but it may still be eligible for return under the return policy.";
+      }
+
+      if (q.includes("refund")) {
+        return "From the retrieved policies, refunds to the original payment method are generally processed within 5 to 10 business days depending on the payment provider. The return policy also notes that inspection at the warehouse can affect when the refund starts processing.";
+      }
+
+      // Generic grounded fallback using the top chunks
+      return `Here is the grounded answer based on the retrieved policy context: ${topText.slice(0, 280)}${topText.length > 280 ? "..." : ""}`;
+    }
+
+    function buildGroundingReason(topChunks) {
+      const docs = [...new Set(topChunks.map(c => c.docTitle))];
+      return `This answer is grounded because it is derived from ${topChunks.length} retrieved chunk(s) coming from ${docs.join(", ")}. Instead of answering from general model memory alone, the system first found policy text that overlaps with the question and then used that text to build the final response.`;
+    }
+
+    function updateTopbar() {
+      const step = appState.currentStep;
+      const total = stages.length;
+      const progress = step < 0 ? 0 : ((step + 1) / total) * 100;
+
+      els.meterFill.style.width = `${progress}%`;
+      els.progressText.textContent = `${Math.max(0, step + 1)} / ${total} stages`;
+
+      els.currentStageBadge.textContent = step >= 0 ? `Step ${step + 1}: ${stages[step].name}` : "Not started";
+
+      [...els.pipelineWrap.querySelectorAll(".stage-pill")].forEach((pill, idx) => {
+        pill.classList.toggle("active", idx === step);
+        pill.classList.toggle("done", step > idx);
+      });
+
+      els.prevBtn.disabled = step <= 0;
+      els.nextBtn.disabled = step >= stages.length - 1 && appState.initialized;
+    }
+
+    function renderAllVisibleStages() {
+      if (!appState.initialized || appState.currentStep < 0) {
+        els.stageContainer.innerHTML = `
+          <div class="card">
+            <div class="section-head">
+              <div class="title-group">
+                <h2>Ready to begin</h2>
+                <div class="help">Run the simulation to walk through the full RAG pipeline with a real example query.</div>
+              </div>
+            </div>
+            <div class="empty">
+              Nothing has been executed yet. Pick an example query or type your own question, then click <strong>Run Simulation</strong>.
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const html = [];
+      for (let i = 0; i <= appState.currentStep; i++) {
+        html.push(renderStageCard(i));
+        if (i < appState.currentStep) {
+          html.push(`<div class="connector" aria-hidden="true"></div>`);
+        }
+      }
+      els.stageContainer.innerHTML = html.join("");
+
+      setTimeout(() => {
+        [...els.stageContainer.querySelectorAll(".stage-card")].forEach(el => el.classList.add("visible"));
+      }, 10);
+
+      bindDynamicStageEvents();
+    }
+
+    function renderStageCard(index) {
+      const stage = stages[index];
+      const inputSummary = getInputSummary(index);
+      const outputSummary = getOutputSummary(index);
+      const whyItMatters = getWhyItMatters(index);
+
+      return `
+        <section class="card stage-card" id="stage-${stage.id}">
+          <div class="section-head">
+            <div class="title-group">
+              <h2>Step ${index + 1}. ${escapeHtml(stage.name)}</h2>
+              <div class="help">${escapeHtml(stage.explainer)}</div>
+            </div>
+            <div class="badge-row">
+              <span class="badge accent">Input: ${escapeHtml(inputSummary)}</span>
+              <span class="badge success">Output: ${escapeHtml(outputSummary)}</span>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-bottom:14px;">
+            <strong>Why this step matters:</strong> ${escapeHtml(whyItMatters)}
+          </div>
+
+          ${renderStageContent(stage.id)}
+        </section>
+      `;
+    }
+
+    function getInputSummary(index) {
+      const map = [
+        "Raw user question",
+        "Question + searchable documents",
+        "Full documents",
+        "Chunks + query",
+        "Query and chunk vectors",
+        "Ranked chunks",
+        "Top retrieved chunks",
+        "Assembled context + question",
+        "Augmented prompt",
+        "Answer + supporting chunks"
+      ];
+      return map[index] || "";
+    }
+
+    function getOutputSummary(index) {
+      const map = [
+        "Normalized query intent",
+        "Visible source set",
+        "Searchable chunks",
+        "Conceptual vectors",
+        "Similarity scores",
+        "Top 3 chunks",
+        "Context block",
+        "LLM-ready prompt",
+        "Grounded answer",
+        "Traceable evidence"
+      ];
+      return map[index] || "";
+    }
+
+    function getWhyItMatters(index) {
+      const map = [
+        "The system needs to capture the user’s exact information need before retrieval begins.",
+        "RAG only works if there is a clear body of source material available to retrieve from.",
+        "Chunking improves retrieval precision because smaller passages are easier to match than full documents.",
+        "Embeddings let the system compare meaning in a numeric space, even when wording differs.",
+        "Search determines which chunks are likely to be useful evidence for the answer.",
+        "Only the most relevant chunks should be passed forward, otherwise the prompt becomes noisy.",
+        "The model needs a clean, assembled context window rather than a scattered list of snippets.",
+        "Prompt augmentation is the bridge between retrieval and generation.",
+        "The final answer should reflect retrieved evidence, not just language-model fluency.",
+        "Grounding makes the answer explainable, auditable, and more trustworthy."
+      ];
+      return map[index] || "";
+    }
+
+    function renderStageContent(stageId) {
+      switch (stageId) {
+        case "query": return renderQueryStage();
+        case "kb": return renderKBStage();
+        case "chunking": return renderChunkingStage();
+        case "embedding": return renderEmbeddingStage();
+        case "search": return renderSearchStage();
+        case "topk": return renderTopKStage();
+        case "context": return renderContextStage();
+        case "prompt": return renderPromptStage();
+        case "answer": return renderAnswerStage();
+        case "grounding": return renderGroundingStage();
+        default: return "";
+      }
+    }
+
+    function renderQueryStage() {
+      const qTokens = appState.queryTokens.map(token => `<span class="token hit">${escapeHtml(token)}</span>`).join("") || `<span class="small">No meaningful keywords detected.</span>`;
+      return `
+        <div class="panel-grid">
+          <div class="query-box">
+            <div class="badge-row" style="margin-bottom:10px;">
+              <span class="badge accent">User asks</span>
+              <span class="badge" data-tip="A plain LLM may know general patterns, but it may not know this company’s exact policy wording or latest business rules.">Why retrieval helps</span>
+            </div>
+            <div style="font-size:18px; font-weight:700; margin-bottom:10px;">“${escapeHtml(appState.query)}”</div>
+            <div class="help">
+              The system first identifies the information need. In a real product, this is where you may also do query rewriting, intent detection, metadata routing, or guardrail checks.
+            </div>
+            <div class="token-row">${qTokens}</div>
+          </div>
+
+          <div class="info-grid">
+            <div class="mini-card">
+              <h4>Input to this step</h4>
+              <p>A raw user question in natural language.</p>
+            </div>
+            <div class="mini-card">
+              <h4>Output from this step</h4>
+              <p>A normalized query signal that will be used to search the knowledge base.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderKBStage() {
+      const docsHtml = knowledgeBase.map(doc => {
+        const preview = doc.content.slice(0, 165) + (doc.content.length > 165 ? "..." : "");
+        return `
+          <article class="doc-card">
+            <div class="doc-meta">
+              <span class="badge accent">${escapeHtml(doc.category)}</span>
+              <span class="badge">Source: ${escapeHtml(doc.source)}</span>
+              <span class="badge">${escapeHtml(doc.id)}</span>
+            </div>
+            <div class="doc-title">${escapeHtml(doc.title)}</div>
+            <div class="doc-body">${escapeHtml(preview)}</div>
+            <button class="doc-toggle" type="button" data-doc="${escapeHtml(doc.id)}">View full document</button>
+            <div class="doc-full" id="full-${escapeHtml(doc.id)}">
+              <div class="doc-body">${escapeHtml(doc.content)}</div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      return `
+        <div class="panel-grid">
+          <div class="callout">
+            <strong>What changed from the previous step:</strong> We moved from the user’s question to the set of documents that the system is allowed to search. This is the knowledge boundary of the assistant.
+          </div>
+          <div class="doc-list">${docsHtml}</div>
+        </div>
+      `;
+    }
+
+    function renderChunkingStage() {
+      const html = appState.chunks.map(chunk => `
+        <article class="chunk-card">
+          <div class="chunk-meta">
+            <span class="badge accent">${escapeHtml(chunk.id)}</span>
+            <span class="badge">From: ${escapeHtml(chunk.docTitle)}</span>
+            <span class="badge">${escapeHtml(chunk.category)}</span>
+          </div>
+          <div class="chunk-body">${escapeHtml(chunk.text)}</div>
+        </article>
+      `).join("");
+
+      return `
+        <div class="panel-grid">
+          <div class="callout">
+            <strong>What changed from the previous step:</strong> Each long source document has been split into smaller chunks. This improves precision because the retriever can now match the exact passage that answers the question.
+          </div>
+          <div class="badge-row">
+            <span class="badge accent">Total chunks: ${appState.chunks.length}</span>
+            <span class="badge">Chunking strategy: 2 sentences per chunk</span>
+          </div>
+          <div class="chunk-list">${html}</div>
+        </div>
+      `;
+    }
+
+    function renderEmbeddingStage() {
+      const topForEmbedding = appState.scoredChunks.slice(0, 4);
+      const queryTokens = appState.queryTokens;
+
+      return `
+        <div class="embed-wrap">
+          <div class="embed-card">
+            <div class="embed-header">
+              <div>
+                <strong>Query embedding (conceptual)</strong>
+                <div class="small">In real RAG, the query becomes a dense vector produced by an embedding model.</div>
+              </div>
+              <span class="badge warning">Simulation only</span>
+            </div>
+            <div class="token-row">
+              ${queryTokens.map(t => `<span class="token hit">${escapeHtml(t)}</span>`).join("")}
+            </div>
+            ${renderVectorBars(appState.queryVector)}
+          </div>
+
+          ${topForEmbedding.map(chunk => `
+            <div class="embed-card">
+              <div class="embed-header">
+                <div>
+                  <strong>${escapeHtml(chunk.id)} · ${escapeHtml(chunk.docTitle)}</strong>
+                  <div class="small">${escapeHtml(chunk.text)}</div>
+                </div>
+                <span class="badge">${escapeHtml(chunk.category)}</span>
+              </div>
+              <div class="token-row">
+                ${tokenize(chunk.text).slice(0, 12).map(t => {
+                  const hit = appState.queryTokens.includes(t);
+                  return `<span class="token ${hit ? "hit" : ""}">${escapeHtml(t)}</span>`;
+                }).join("")}
+              </div>
+              ${renderVectorBars(chunk.vector)}
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderVectorBars(vector) {
+      return `
+        <div class="vector-bars" aria-label="Conceptual vector representation">
+          ${vector.map((val, idx) => `
+            <div class="bar-col">
+              <div class="bar" style="height:${Math.max(10, val * 8)}px;"></div>
+              <div class="bar-label">d${idx + 1}</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderSearchStage() {
+      const maxScore = Math.max(...appState.scoredChunks.map(c => c.score), 1);
+
+      return `
+        <div class="panel-grid">
+          <div class="callout">
+            <strong>What changed from the previous step:</strong> The chunks are now scored against the query. In production, this might use vector similarity, hybrid search, reranking, or metadata filters. Here we simulate it with keyword overlap plus vector-like similarity.
+          </div>
+
+          <div class="rank-list">
+            ${appState.scoredChunks.map((chunk, idx) => `
+              <article class="rank-card ${idx === 0 ? "top" : ""}">
+                <div class="rank-meta">
+                  <span class="badge accent">Rank #${idx + 1}</span>
+                  <span class="badge">${escapeHtml(chunk.id)}</span>
+                  <span class="badge">Doc: ${escapeHtml(chunk.docTitle)}</span>
+                </div>
+                <div class="chunk-body">${escapeHtml(chunk.text)}</div>
+                <div class="score-bar-wrap">
+                  <div class="small" style="margin-bottom:6px;">
+                    Similarity score: <strong style="color:var(--text)">${chunk.score}</strong> · ${escapeHtml(chunk.explanation)}
+                  </div>
+                  <div class="score-bar-track">
+                    <div class="score-bar" style="width:${(chunk.score / maxScore) * 100}%"></div>
+                  </div>
+                </div>
+                <div class="token-row">
+                  ${chunk.matchedKeywords.length
+                    ? chunk.matchedKeywords.map(k => `<span class="token hit">${escapeHtml(k)}</span>`).join("")
+                    : `<span class="small">No direct keyword matches; mostly low relevance.</span>`
+                  }
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTopKStage() {
+      const topIds = new Set(appState.topChunks.map(c => c.id));
+
+      return `
+        <div class="panel-grid">
+          <div class="callout">
+            <strong>What changed from the previous step:</strong> Instead of carrying every scored chunk forward, the system now picks only the highest-value evidence. This keeps the prompt focused and reduces noise.
+          </div>
+
+          <div class="badge-row">
+            <span class="badge accent">Top-K = 3</span>
+            <span class="badge success">Retrieved chunks highlighted</span>
+          </div>
+
+          <div class="rank-list">
+            ${appState.scoredChunks.map((chunk, idx) => `
+              <article class="rank-card ${topIds.has(chunk.id) ? "retrieved" : ""} ${idx === 0 ? "top" : ""}">
+                <div class="rank-meta">
+                  <span class="badge ${topIds.has(chunk.id) ? "success" : ""}">
+                    ${topIds.has(chunk.id) ? "Retrieved" : "Discarded"}
+                  </span>
+                  <span class="badge">${escapeHtml(chunk.id)}</span>
+                  <span class="badge">Score: ${chunk.score}</span>
+                </div>
+                <div class="chunk-body">${escapeHtml(chunk.text)}</div>
+                ${topIds.has(chunk.id)
+                  ? `<div class="small" style="margin-top:10px;">Selected because it has the strongest overlap with the user’s question and adds direct policy evidence.</div>`
+                  : `<div class="small" style="margin-top:10px;">Not selected because higher-ranked chunks were more directly relevant.</div>`
+                }
+              </article>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderContextStage() {
+      return `
+        <div class="panel-grid">
+          <div class="callout">
+            <strong>What changed from the previous step:</strong> The retrieved evidence is now assembled into a clean context block that can be inserted into the prompt. This is where source attribution becomes especially useful.
+          </div>
+
+          <div class="context-list">
+            ${appState.topChunks.map((chunk, idx) => `
+              <article class="context-card retrieved">
+                <div class="doc-meta">
+                  <span class="badge success">Source ${idx + 1}</span>
+                  <span class="badge">${escapeHtml(chunk.docTitle)}</span>
+                  <span class="badge">${escapeHtml(chunk.id)}</span>
+                </div>
+                <div class="context-body">${escapeHtml(chunk.text)}</div>
+              </article>
+            `).join("")}
+          </div>
+
+          <div class="prompt-card">
+            <h4>Assembled context block</h4>
+            <div class="prompt-box">${escapeHtml(appState.assembledContext)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPromptStage() {
+      return `
+        <div class="two-col">
+          <div class="prompt-card">
+            <h4>Prompt sent to the LLM</h4>
+            <div class="small">
+              This is the handoff point between retrieval and generation. The model now receives instructions, retrieved context, and the user’s question together.
+            </div>
+            <div class="prompt-box" id="promptBox">${escapeHtml(appState.finalPrompt)}</div>
+            <div class="copy-row">
+              <span>Structured as system guidance + retrieved context + user question.</span>
+              <button id="copyPromptBtn" type="button">Copy prompt</button>
+            </div>
+          </div>
+
+          <div class="prompt-card">
+            <h4>Prompt design notes</h4>
+            <div class="ground-note">
+              <ul class="small" style="margin: 0; padding-left: 18px; line-height: 1.7;">
+                <li>The answer is explicitly constrained to retrieved context.</li>
+                <li>Instructions ask for clarity and conditions, not just fluency.</li>
+                <li>Source-backed generation reduces the chance of policy hallucination.</li>
+                <li>In production, you may also add citation format rules, fallback behavior, or safety instructions.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAnswerStage() {
+      return `
+        <div class="panel-grid">
+          <div class="answer-card">
+            <div class="badge-row" style="margin-bottom:10px;">
+              <span class="badge success">Generated</span>
+              <span class="badge accent">Grounded answer</span>
+            </div>
+            <div class="answer-body">${escapeHtml(appState.finalAnswer)}</div>
+          </div>
+
+          <div class="info-grid">
+            <div class="mini-card">
+              <h4>What changed from the previous step</h4>
+              <p>The retrieved context has now been transformed into a user-facing answer. The model is no longer guessing from general knowledge alone.</p>
+            </div>
+            <div class="mini-card">
+              <h4>What a stakeholder should notice</h4>
+              <p>The answer reflects explicit policy conditions like deadlines, eligibility, and special cases because the system supplied those details as context.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGroundingStage() {
+      return `
+        <div class="panel-grid">
+          <div class="callout">
+            <strong>Why this answer is grounded:</strong> ${escapeHtml(appState.answerReason)}
+          </div>
+
+          <div class="ground-list">
+            ${appState.topChunks.map((chunk, idx) => `
+              <article class="ground-card retrieved">
+                <div class="doc-meta">
+                  <span class="badge success">Evidence ${idx + 1}</span>
+                  <span class="badge">${escapeHtml(chunk.docTitle)}</span>
+                  <span class="badge">${escapeHtml(chunk.id)}</span>
+                </div>
+                <div class="chunk-body">${escapeHtml(chunk.text)}</div>
+              </article>
+            `).join("")}
+          </div>
+
+          <div class="info-grid">
+            <div class="mini-card">
+              <h4>What RAG does well</h4>
+              <p>Improves traceability, supports fresher knowledge, and helps enterprise assistants answer from controlled source material.</p>
+            </div>
+            <div class="mini-card">
+              <h4>What still matters in production</h4>
+              <p>Retrieval quality, chunking strategy, metadata filtering, citation handling, latency, evaluation, and human-approved policy governance.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindDynamicStageEvents() {
+      [...document.querySelectorAll(".doc-toggle")].forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = document.getElementById(`full-${btn.dataset.doc}`);
+          const isOpen = target.classList.toggle("open");
+          btn.textContent = isOpen ? "Hide full document" : "View full document";
+        });
+      });
+
+      const copyPromptBtn = document.getElementById("copyPromptBtn");
+      if (copyPromptBtn) {
+        copyPromptBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(appState.finalPrompt);
+            showToast("Prompt copied to clipboard.");
+          } catch {
+            showToast("Clipboard copy is not available in this browser.");
+          }
+        });
+      }
+    }
+
+    function scrollStageIntoView() {
+      const current = stages[appState.currentStep];
+      if (!current) return;
+      const target = document.getElementById(`stage-${current.id}`);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => {
+        els.toast.classList.remove("show");
+      }, 2200);
+    }
+
+    init();
+  </script>
+</body>
+</html>
